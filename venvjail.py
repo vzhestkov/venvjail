@@ -183,7 +183,7 @@ def _fix_alternatives(dest_dir, relocated):
                     os.unlink(rel_name)
                     os.symlink(alt_name, rel_name)
                 else:
-                    print("ERROR: alternative link for %s not found" % name)
+                    print(f"ERROR: alternative link for {name} not found")
 
 
 def _fix_broken_links(dest_dir, directories=None):
@@ -205,7 +205,7 @@ def _fix_broken_links(dest_dir, directories=None):
                         os.unlink(rel_name)
                         os.symlink(rel_link, rel_name)
                     else:
-                        print("ERROR: alternative link for %s not found" % name)
+                        print(f"ERROR: alternative link for {name} not found")
 
 
 def _fix_relocation(dest_dir, virtual_env, no_relocate_shebang):
@@ -230,30 +230,30 @@ def _fix_activators(dest_dir, virtual_env):
     ld_library_path = os.path.join(virtual_env, "lib")
     activators = {
         "activate": {
-            "replace": (r'VIRTUAL_ENV=".*"', 'VIRTUAL_ENV="%s"' % virtual_env),
+            "replace": (r'VIRTUAL_ENV=".*"', f'VIRTUAL_ENV="{virtual_env}"'),
             "insert": (
                 "deactivate nondestructive",
-                'export LD_LIBRARY_PATH="%s"' % ld_library_path,
+                f'export LD_LIBRARY_PATH="{ld_library_path}"',
             ),
         },
         "activate.csh": {
             "replace": (
                 r'setenv VIRTUAL_ENV ".*"',
-                'setenv VIRTUAL_ENV "%s"' % virtual_env,
+                f'setenv VIRTUAL_ENV "{virtual_env}"',
             ),
             "insert": (
                 "deactivate nondestructive",
-                'setenv LD_LIBRARY_PATH "%s"' % ld_library_path,
+                f'setenv LD_LIBRARY_PATH "{ld_library_path}"',
             ),
         },
         "activate.fish": {
             "replace": (
                 r'set -gx VIRTUAL_ENV ".*"',
-                'set -gx VIRTUAL_ENV "%s"' % virtual_env,
+                f'set -gx VIRTUAL_ENV "{virtual_env}"',
             ),
             "insert": (
                 "deactivate nondestructive",
-                'set -gx LD_LIBRARY_PATH "%s"' % ld_library_path,
+                f'set -gx LD_LIBRARY_PATH "{ld_library_path}"',
             ),
         },
     }
@@ -277,8 +277,8 @@ def _fix_systemd_services(dest_dir, virtual_env):
     for service in glob.glob(os.path.join(services, "*.service")):
         # Service files are read only
         os.chmod(service, 0o644)
-        _replace(service, r"ExecStart=(.*)", r"ExecStart=%s\1" % virtual_env)
-        _replace(service, r"ExecStartPre=-(.*)", r"ExecStartPre=-%s\1" % virtual_env)
+        _replace(service, r"ExecStart=(.*)", rf"ExecStart={virtual_env}\1")
+        _replace(service, r"ExecStartPre=-(.*)", rf"ExecStartPre=-{virtual_env}\1")
         os.chmod(service, 0o444)
         # For convenience, rename the service
         os.rename(service, os.path.join(services, "venv-" + os.path.basename(service)))
@@ -295,7 +295,7 @@ def _os_release(ardana_version):
         "description": re.findall(r"Description:\s+(.*)$", output, re.MULTILINE)[0],
         "release": re.findall(r"Release:\s+(.*)$", output, re.MULTILINE)[0],
         "codename": re.findall(r"Codename:\s+(.*)$", output, re.MULTILINE)[0],
-        "deployer_version": "ardana-%s" % ardana_version,
+        "deployer_version": f"ardana-{ardana_version}",
         "pip_mirror": "OBS",
     }
 
@@ -303,7 +303,7 @@ def _os_release(ardana_version):
 def _pip_freeze(dest_dir):
     """Return the output from `pip freeze`."""
     output = subprocess.check_output(
-        "cd %s; source bin/activate; pip freeze" % dest_dir, shell=True
+        f"cd {dest_dir}; source bin/activate; pip freeze", shell=True
     )
     output = output.decode("utf-8")
     return output.split("\n")
@@ -321,12 +321,12 @@ def add_meta_inf(dest_dir, version, ardana_version):
     with open(version_yml, "w+") as f:
         print(LICENSE, file=f)
         print(file=f)
-        print("# Version for: %s" % service, file=f)
+        print(f"# Version for: {service}", file=f)
         print("---", file=f)
         print(file=f)
         print("file_format: 1", file=f)
-        print("version: %s" % version, file=f)
-        print("timestamp: %s" % timestamp, file=f)
+        print(f"version: {version}", file=f)
+        print(f"timestamp: {timestamp}", file=f)
 
     release = _os_release(ardana_version)
     pip_freeze = _pip_freeze(dest_dir)
@@ -334,20 +334,20 @@ def add_meta_inf(dest_dir, version, ardana_version):
     # Add manifest YAML file
     manifest_yml = os.path.join(meta_inf, "manifest.yml")
     with open(manifest_yml, "w+") as f:
-        print("# Manifest for: %s" % service, file=f)
+        print(f"# Manifest for: {service}", file=f)
         print("---", file=f)
         print(file=f)
 
         print("# Ardana environment", file=f)
         print("environment:", file=f)
         for key, value in release.items():
-            print("  %s: %s" % (key, value), file=f)
+            print(f"  {key}: {value}", file=f)
         print(file=f)
 
         print("# Pip freeze output", file=f)
         print("pip: |", file=f)
         for line in pip_freeze:
-            print("  %s" % line, file=f)
+            print(f"  {line}", file=f)
 
 
 def create(args):
@@ -359,7 +359,7 @@ def create(args):
     # Make sure that we generate a Python 2.7 environment
     options.append("--python=python2.7")
     options = " ".join(options)
-    subprocess.call("virtualenv %s %s" % (options, args.dest_dir), shell=True)
+    subprocess.call(f"virtualenv {options} {args.dest_dir}", shell=True)
 
     # Prepare the links for /usr/bin and /usr/lib[64]
     usr = os.path.join(args.dest_dir, "usr")
@@ -388,9 +388,10 @@ def create(args):
 
         package = os.path.abspath(package)
         subprocess.call(
-            "cd %s; rpm2cpio %s | cpio --extract --unconditional "
+            f"cd {args.dest_dir}; rpm2cpio {package} | "
+            "cpio --extract --unconditional "
             "--preserve-modification-time --make-directories "
-            "--extract-over-symlinks" % (args.dest_dir, package),
+            "--extract-over-symlinks",
             stdout=subprocess.DEVNULL,
             shell=True,
         )
@@ -418,7 +419,7 @@ def create(args):
         for rpm in sorted(included):
             rpm = os.path.join(args.repo, rpm)
             output = subprocess.check_output(
-                "rpm -qp --queryformat='%s' %s" % (query, rpm),
+                f"rpm -qp --queryformat='{query}' {rpm}",
                 stderr=subprocess.DEVNULL,
                 shell=True,
             )
@@ -451,9 +452,9 @@ def _filter_binary_name(names, args):
 
 def _repository(args):
     """List binary packages from a repository"""
-    api = "/build/%s/%s/%s/_repository" % (args.project, args.repo, args.arch)
+    api = f"/build/{args.project}/{args.repo}/{args.arch}/_repository"
     output = subprocess.check_output(
-        "osc --apiurl %s api %s" % (args.apiurl, api), shell=True
+        f"osc --apiurl {args.apiurl} api {api}", shell=True
     )
     elements = _filter_binary_xml(ET.fromstring(output))
     # Unversioned name, so we remove the file extension
@@ -467,7 +468,7 @@ def include(args):
     print()
     print("# Packages from the repository")
     for name in _repository(args):
-        print("%s.*" % name)
+        print(f"{name}.*")
 
 
 def exclude(args):
@@ -483,9 +484,9 @@ def binary(args):
     # need only the name of the package
     rpm_re = re.compile(r"(.*)-([^-]+)-([^-]+)\.([^-\.]+)\.rpm")
 
-    api = "/build/%s/%s/%s/%s" % (args.project, args.repo, args.arch, args.package)
+    api = f"/build/{args.project}/{args.repo}/{args.arch}/{args.package}"
     output = subprocess.check_output(
-        "osc --apiurl %s api %s" % (args.apiurl, api), shell=True
+        f"osc --apiurl {args.apiurl} api {api}", shell=True
     )
     elements = _filter_binary_xml(ET.fromstring(output))
     # Take only the name of the package
@@ -504,9 +505,9 @@ def _filter_requires_spec(spec):
 def requires(args):
     """List requirements for a source package"""
 
-    api = "/source/%s/%s/%s.spec" % (args.project, args.package, args.package)
+    api = f"/source/{args.project}/{args.package}/{args.package}.spec"
     output = subprocess.check_output(
-        "osc --apiurl %s api %s" % (args.apiurl, api), shell=True
+        f"osc --apiurl {args.apiurl} api {api}", shell=True
     )
     requires_and_version = _filter_requires_spec(output.decode("utf-8"))
     requires = requires_and_version.keys()
@@ -524,7 +525,7 @@ def requires(args):
     requires = set(requires) - set(in_venv)
 
     for rpm in sorted(requires):
-        requires = "%s %s" % (rpm, requires_and_version[rpm].strip())
+        requires = f"{rpm} {requires_and_version[rpm].strip()}"
         print(requires.strip())
 
 
