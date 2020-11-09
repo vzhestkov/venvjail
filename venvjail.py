@@ -358,6 +358,7 @@ def create(args):
         options.append("--system-site-packages")
     # Make sure that we generate a Python 3.8 environment
     options.append("--python=python3.8")
+    options.append("--without-pip")
     options = " ".join(options)
     subprocess.call(f"virtualenv {options} {args.dest_dir}", shell=True)
 
