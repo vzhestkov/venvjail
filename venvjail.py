@@ -174,11 +174,11 @@ def _fix_alternatives(dest_dir, relocated):
         for name in filenames:
             rel_name = os.path.join(dirpath, name)
             if os.path.islink(rel_name) and "alternatives" in os.readlink(rel_name):
-                # We assume that the Python 2.7 alternative is living
+                # We assume that the Python 3.8 alternative is living
                 # in the same directory, but we create the link the
                 # the place were it will live at the end
-                alt_name = os.path.join(relocated, dirpath, name + "-2.7")
-                alt_rel_name = rel_name + "-2.7"
+                alt_name = os.path.join(relocated, dirpath, name + "-3.8")
+                alt_rel_name = rel_name + "-3.8"
                 if os.path.exists(alt_rel_name):
                     os.unlink(rel_name)
                     os.symlink(alt_name, rel_name)
