@@ -51,3 +51,5 @@ In brief, it seems `debbuild` wors fine for simple `spec`, but not processing th
 ## Other:
 - [13363](https://github.com/SUSE/spacewalk/issues/13363) - python3 porting: susemanager-schema contains a python2 tool called "blend"
   Ported `blend` to Python3. Ported version is still compatible with Python3. PRs created for Uyuni/Manager 4.1 (Manager 4.0 has different version of `blend` with `Oracle` compatibility). The tool is used only during package build.
+- [1564](https://github.com/SUSE/spacewalk/issues/1564) - salt zypper.py: hold/unhold vs. add_lock/remove_lock
+  Michele Bologna asked to promote the change. Converted draft PR to PR. Could you review it, please?
