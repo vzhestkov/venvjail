@@ -1,12 +1,12 @@
 ## Python & Salt bundle
 
-### 1. Created first builds of python38 for Ubuntu 20.04/18.04/16.04
+### Created first builds of python38 for Ubuntu 20.04/18.04/16.04
 There are a number of issues fixed and some issues still present, but in general build is successful for all distributions.
 
 Fixed issues:
 - A list of `Substitute:` defined in the project configuration (systemsmanagement:saltstack:bundle:python) to solve Ubuntu dependencies.
 - `dash` is used with the link to `sh` instead on `bash`. It leads to the improper macro resolving by `debbuild` (text substitution with `%(...)` often produces empty string). Fixed by creating `dash2bash` dummy package (it's just fixing `sh` link to `bash` on installation, need to be added as a required for `deb` package build).
-- `bcond` macroses not working the right way by default. Most probably due to the missing `%global` difinitions of appropriate values.
+- `bcond...` macroses not working the right way by default. Most probably due to the missing `%global` difinitions of appropriate values.
   Was solved by workaround in `spec`:
   ```
   %if "%_repository" == "xUbuntu_20.04" ||  "%_repository" == "xUbuntu_18.04" || "%_repository" == "xUbuntu_16.04"
@@ -33,3 +33,21 @@ Existing issues:
  - `debbuild` is not processing `%exclude` in `%files`, it could be the root cause of the previous issue.
 
 In brief, it seems `debbuild` wors fine for simple `spec`, but not processing the complex `spec` with complex macroses.
+
+## BUGs:
+- [1180101](https://github.com/SUSE/spacewalk/issues/13493) - L3: Hardware refresh fails for the clients with many devices
+  PRs for `salt/openSUSE-3000` and `3000.3` are created, not required for upstream as already implemented in `development` branch
+- [1179831](https://github.com/SUSE/spacewalk/issues/13407) - Scheduled SSH-Push Tasks throws Exception and cause Salt-API to fail
+  The PTF provided, no feedback from the first customer, but one more customer reporting the issue and the PTF already provided
+- [1179990](https://github.com/SUSE/spacewalk/issues/13448) - tracebacks on invalid certs and missing mail configuration
+  PRs for Uyuni/Manager 4.1/Manager 4.0 created
+- [1179937](https://github.com/SUSE/spacewalk/issues/13452) - pkg.info_installed returns duplicate entries
+  No actions needed as the root cause is the wrong data in RPM DB on the affected system
+- [1179633](https://github.com/SUSE/spacewalk/issues/13380) - Schedule autoinstallation fails for ppc64le clients with ISE
+  Fixed directly on the test system to check, waiting for feedback from Don Vosburg
+- [1174855](https://github.com/SUSE/spacewalk/issues/13093) - salt-minion-3000-46.101.1 spams log file
+  PRs created for `salt/openSUSE-3000` and `3000.3`. Could be simplified using constant sleep time, the provided version is less verbose in long term.
+
+## Other:
+- [13363](https://github.com/SUSE/spacewalk/issues/13363) - python3 porting: susemanager-schema contains a python2 tool called "blend"
+  Ported `blend` to Python3. Ported version is still compatible with Python3. PRs created for Uyuni/Manager 4.1 (Manager 4.0 has different version of `blend` with `Oracle` compatibility). The tool is used only during package build.
